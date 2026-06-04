@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import sys,json; nb=json.load\\(sys.stdin\\); [print\\(c['source']\\) for c in nb['cells'] if c['cell_type']=='code']\")",
+      "Bash(mkdir -p /Users/jamiele/Downloads/NFLwinloss/docs/superpowers/specs && echo created)",
+      "Bash(git add *)",
+      "Bash(git -c user.name=Jamie -c user.email=jambole24@gmail.com commit -m 'feat: fastapi backend + frontend ui for predictions *)",
+      "Bash(python3)",
+      "Bash(osascript -e 'tell application \"Microsoft Word\" *)",
+      "Bash(python3 -c \"from PyPDF2 import PdfReader; print\\('PAGES:', len\\(PdfReader\\('/Users/jamiele/Downloads/JamieLeResume_Netspend_DataScientist.pdf'\\).pages\\)\\)\")"
+    ],
+    "additionalDirectories": [
+      "/Users/jamiele/Downloads/NFLwinloss/docs/superpowers"
+    ]
+  }
+}
