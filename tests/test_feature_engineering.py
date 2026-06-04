@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.feature_engineering import add_rolling
+from src.feature_engineering import add_rolling, build_differentials
 
 
 def test_rolling_excludes_current_game():
@@ -18,3 +18,12 @@ def test_rolling_excludes_current_game():
     vals = out["points_scored_roll5"].tolist()
     assert vals[1] == 10
     assert vals[2] == 15
+
+
+def test_differential_is_home_minus_away():
+    row = pd.DataFrame({
+        "home_pass_yards_roll5": [250],
+        "away_pass_yards_roll5": [200],
+    })
+    out = build_differentials(row, ["pass_yards_roll5"])
+    assert out["pass_yards_roll5_diff"].iloc[0] == 50
