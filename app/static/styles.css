@@ -1,0 +1,129 @@
+:root {
+  --ink: #15191e;
+  --paper: #f4f1ea;
+  --line: #d8d2c4;
+  --home: #1f6feb;
+  --away: #c8472f;
+  --muted: #6b6256;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.masthead {
+  border-bottom: 3px solid var(--ink);
+  padding: 2rem 1.5rem 1.25rem;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.masthead h1 {
+  margin: 0;
+  font-size: 2.2rem;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+}
+
+.tagline { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.95rem; max-width: 60ch; }
+
+main { max-width: 920px; margin: 0 auto; padding: 1.5rem; }
+
+.controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 6px;
+}
+
+.team-select { display: flex; flex-direction: column; gap: 0.3rem; }
+.team-select label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+
+select {
+  font-size: 1.05rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  min-width: 120px;
+}
+
+.at { font-size: 1.3rem; color: var(--muted); padding-bottom: 0.5rem; }
+
+button {
+  margin-left: auto;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.6rem 1.4rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--ink);
+  color: #fff;
+  cursor: pointer;
+}
+button:hover { background: #2c333c; }
+
+.error { color: var(--away); font-weight: 600; }
+
+/* probability bar */
+.prob-bar {
+  display: flex;
+  height: 54px;
+  margin: 1.75rem 0 1.25rem;
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.prob-fill { display: flex; align-items: center; transition: width 0.5s ease; }
+.away-fill { background: var(--away); justify-content: flex-start; }
+.home-fill { background: var(--home); justify-content: flex-end; }
+.prob-label { color: #fff; font-weight: 700; padding: 0 0.9rem; white-space: nowrap; }
+
+/* team cards */
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.card {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 6px;
+  padding: 1.1rem 1.25rem;
+}
+#away-card { border-top: 4px solid var(--away); }
+#home-card { border-top: 4px solid var(--home); }
+.card h2 { margin: 0 0 0.75rem; font-size: 1.3rem; }
+.card h3 { margin: 1rem 0 0.5rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+
+table.stats { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+table.stats td { padding: 0.3rem 0; border-bottom: 1px solid #efece4; }
+table.stats td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+ul.players { list-style: none; margin: 0; padding: 0; }
+ul.players li { display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.3rem 0; font-size: 0.92rem; border-bottom: 1px solid #efece4; }
+ul.players .pos { color: var(--muted); font-size: 0.8rem; }
+ul.players .stat { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* factors */
+.factors { margin-top: 1.5rem; border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 1.1rem 1.25rem; }
+.factors h3 { margin: 0 0 0.6rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.factors ul { list-style: none; margin: 0; padding: 0; }
+.factors li { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0; }
+.factors .chip { font-size: 0.72rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 3px; color: #fff; }
+.factors .chip.home { background: var(--home); }
+.factors .chip.away { background: var(--away); }
+.footnote { color: var(--muted); font-size: 0.8rem; margin: 0.6rem 0 0; }
+
+footer { max-width: 920px; margin: 2rem auto; padding: 1rem 1.5rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; }
+
+@media (max-width: 640px) {
+  .cards { grid-template-columns: 1fr; }
+  button { margin-left: 0; width: 100%; }
+}

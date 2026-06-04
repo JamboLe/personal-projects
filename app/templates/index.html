@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NFL Win Predictor</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="masthead">
+    <h1>NFL Win Predictor</h1>
+    <p class="tagline">Pre-game win probability from team form, rest, and conditions.
+      Model: XGBoost on 2019&ndash;2025 regular-season games.</p>
+  </header>
+
+  <main>
+    <section class="controls">
+      <div class="team-select">
+        <label for="away">Away team</label>
+        <select id="away">
+          {% for t in teams %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+        </select>
+      </div>
+      <span class="at">@</span>
+      <div class="team-select">
+        <label for="home">Home team</label>
+        <select id="home">
+          {% for t in teams %}<option value="{{ t }}"{% if loop.index == 2 %} selected{% endif %}>{{ t }}</option>{% endfor %}
+        </select>
+      </div>
+      <button id="predict-btn">Predict</button>
+    </section>
+
+    <p id="error" class="error" hidden></p>
+
+    <section id="result" hidden>
+      <div class="prob-bar">
+        <div class="prob-fill away-fill" id="away-fill">
+          <span class="prob-label" id="away-prob-label"></span>
+        </div>
+        <div class="prob-fill home-fill" id="home-fill">
+          <span class="prob-label" id="home-prob-label"></span>
+        </div>
+      </div>
+
+      <div class="cards">
+        <div class="card" id="away-card">
+          <h2 id="away-name"></h2>
+          <table class="stats" id="away-stats"></table>
+          <h3>Top performers</h3>
+          <ul class="players" id="away-players"></ul>
+        </div>
+        <div class="card" id="home-card">
+          <h2 id="home-name"></h2>
+          <table class="stats" id="home-stats"></table>
+          <h3>Top performers</h3>
+          <ul class="players" id="home-players"></ul>
+        </div>
+      </div>
+
+      <div class="factors">
+        <h3>What drove this prediction</h3>
+        <ul id="shap-factors"></ul>
+        <p class="footnote">Contributions from SHAP values on the XGBoost model.
+          A positive value pushes toward the home team.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Built by Jamie &middot; data via nflverse / Pro Football Reference</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
