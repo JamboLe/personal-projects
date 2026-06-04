@@ -1,6 +1,7 @@
 import pandas as pd
 
-from src.feature_engineering import add_rolling, build_differentials
+from src.feature_engineering import (
+    add_rolling, build_differentials, chronological_split)
 
 
 def test_rolling_excludes_current_game():
@@ -27,3 +28,11 @@ def test_differential_is_home_minus_away():
     })
     out = build_differentials(row, ["pass_yards_roll5"])
     assert out["pass_yards_roll5_diff"].iloc[0] == 50
+
+
+def test_split_has_no_season_overlap():
+    df = pd.DataFrame({"season": [2019, 2023, 2024, 2025], "x": [1, 2, 3, 4]})
+    train, test = chronological_split(df, train_max=2023)
+    assert set(train["season"]) == {2019, 2023}
+    assert set(test["season"]) == {2024, 2025}
+    assert len(set(train["season"]) & set(test["season"])) == 0

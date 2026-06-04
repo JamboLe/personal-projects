@@ -43,6 +43,17 @@ def build_differentials(df, roll_cols):
     return df
 
 
+def chronological_split(df, train_max=2023):
+    """Split by time, never by random shuffle.
+
+    Training on earlier seasons and testing on later ones is what prevents
+    temporal leakage — the model is always tested on the 'future' it never saw.
+    """
+    train = df[df["season"] <= train_max].copy()
+    test = df[df["season"] > train_max].copy()
+    return train, test
+
+
 def _team_week_table(games):
     """Long team-week table with offensive production + points for/against.
 
@@ -104,4 +115,9 @@ def build_dataset():
     out.to_csv("data/processed/merged_features.csv", index=False)
     print("merged_features:", out.shape)
     print("home_win rate:", out["home_win"].mean().round(3))
+
+    train, test = chronological_split(out, train_max=2023)
+    train.to_csv("data/processed/train.csv", index=False)
+    test.to_csv("data/processed/test.csv", index=False)
+    print(f"train: {train.shape} (<=2023)  test: {test.shape} (>=2024)")
     return out
