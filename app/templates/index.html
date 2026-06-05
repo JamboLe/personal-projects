@@ -5,71 +5,222 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NFL Win Predictor</title>
   <link rel="stylesheet" href="/static/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Fira+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header class="masthead">
-    <h1>NFL Win Predictor</h1>
-    <p class="tagline">Pre-game win probability from team form, rest, and conditions.
-      Model: XGBoost on 2019&ndash;2025 regular-season games.</p>
-  </header>
 
-  <main>
-    <section class="controls">
-      <div class="team-select">
-        <label for="away">Away team</label>
-        <select id="away">
+  <!-- embed team metadata for JS -->
+  <script>
+    const TEAM_META = {{ team_meta | tojson }};
+    const ALL_TEAMS = {{ teams | tojson }};
+  </script>
+
+  <!-- STEP 1: pick teams -->
+  <div id="screen-pick" class="screen active">
+    <!-- animated football stadium background -->
+    <div class="stadium-bg" aria-hidden="true">
+      <div class="stadium-sky"></div>
+      <div class="stadium-glow glow-left"></div>
+      <div class="stadium-glow glow-right"></div>
+      <div class="stadium-crowd"></div>
+      <div class="stadium-field">
+        <div class="field-lines"></div>
+        <div class="field-hash field-hash-l"></div>
+        <div class="field-hash field-hash-r"></div>
+      </div>
+      <div class="stadium-vignette"></div>
+    </div>
+
+    <div class="pick-header">
+      <div class="pick-eyebrow">Machine learning &middot; 2019&ndash;2025 seasons</div>
+      <h1>NFL Win Predictor</h1>
+      <p>Pick a team based on the stats and who you think would win.<br>See how you compare to the numbers.</p>
+    </div>
+
+    <button id="random-btn" class="random-btn">&#x21BB; Random matchup</button>
+
+    <div class="team-pickers">
+      <div class="picker-group">
+        <label>Away team</label>
+        <select id="away-select">
           {% for t in teams %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
         </select>
       </div>
-      <span class="at">@</span>
-      <div class="team-select">
-        <label for="home">Home team</label>
-        <select id="home">
+      <span class="vs-badge">@</span>
+      <div class="picker-group">
+        <label>Home team</label>
+        <select id="home-select">
           {% for t in teams %}<option value="{{ t }}"{% if loop.index == 2 %} selected{% endif %}>{{ t }}</option>{% endfor %}
         </select>
       </div>
-      <button id="predict-btn">Predict</button>
-    </section>
+    </div>
 
-    <p id="error" class="error" hidden></p>
+    <button id="load-btn">Show matchup &rarr;</button>
+    <p id="pick-error" class="error" hidden></p>
+  </div>
 
-    <section id="result" hidden>
-      <div class="prob-bar">
-        <div class="prob-fill away-fill" id="away-fill">
-          <span class="prob-label" id="away-prob-label"></span>
-        </div>
-        <div class="prob-fill home-fill" id="home-fill">
-          <span class="prob-label" id="home-prob-label"></span>
-        </div>
-      </div>
+  <!-- STEP 2: duel -->
+  <div id="screen-matchup" class="screen">
+    <div class="matchup-header">
+      <button id="back-btn" class="back-btn">&larr; Change teams</button>
+      <p class="matchup-label">
+        <span id="header-away"></span> <strong>@</strong> <span id="header-home"></span>
+      </p>
+      <button id="shuffle-btn" class="back-btn" style="margin-left:auto">&#x21BB; Shuffle</button>
+    </div>
 
-      <div class="cards">
-        <div class="card" id="away-card">
-          <h2 id="away-name"></h2>
-          <table class="stats" id="away-stats"></table>
-          <h3>Top performers</h3>
-          <ul class="players" id="away-players"></ul>
-        </div>
-        <div class="card" id="home-card">
-          <h2 id="home-name"></h2>
-          <table class="stats" id="home-stats"></table>
-          <h3>Top performers</h3>
-          <ul class="players" id="home-players"></ul>
+    <div class="duel">
+      <div class="panel away-panel" id="away-panel">
+        <div class="panel-bg" id="away-bg"></div>
+        <div class="panel-content">
+          <div class="panel-team" id="away-team-name"></div>
+          <div class="panel-role">Away</div>
+          <table class="teaser-stats" id="away-teaser"></table>
+          <button class="pick-btn away-pick-btn" data-pick="away">Away wins</button>
         </div>
       </div>
 
-      <div class="factors">
-        <h3>What drove this prediction</h3>
-        <ul id="shap-factors"></ul>
-        <p class="footnote">Contributions from SHAP values on the XGBoost model.
-          A positive value pushes toward the home team.</p>
-      </div>
-    </section>
-  </main>
+      <div class="duel-divider">VS</div>
 
-  <footer>
-    <p>Built by Jamie &middot; data via nflverse / Pro Football Reference</p>
-  </footer>
+      <div class="panel home-panel" id="home-panel">
+        <div class="panel-bg" id="home-bg"></div>
+        <div class="panel-content">
+          <div class="panel-team" id="home-team-name"></div>
+          <div class="panel-role">Home</div>
+          <table class="teaser-stats" id="home-teaser"></table>
+          <button class="pick-btn home-pick-btn" data-pick="home">Home wins</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: reveal -->
+  <div id="screen-reveal" class="screen">
+    <div class="reveal-header">
+      <button id="reset-btn" class="back-btn">&larr; New matchup</button>
+      <p class="matchup-label">
+        <span id="rev-away"></span> <strong>@</strong> <span id="rev-home"></span>
+      </p>
+    </div>
+
+    <div id="verdict-banner" class="verdict-banner"></div>
+
+    <div class="prob-bar">
+      <div class="prob-fill away-fill" id="rev-away-fill">
+        <span class="prob-label" id="rev-away-label"></span>
+      </div>
+      <div class="prob-fill home-fill" id="rev-home-fill">
+        <span class="prob-label" id="rev-home-label"></span>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card away-card">
+        <h2 id="rev-away-name"></h2>
+        <table class="stats" id="rev-away-stats"></table>
+        <h3>Top performers</h3>
+        <ul class="players" id="rev-away-players"></ul>
+      </div>
+      <div class="card home-card">
+        <h2 id="rev-home-name"></h2>
+        <table class="stats" id="rev-home-stats"></table>
+        <h3>Top performers</h3>
+        <ul class="players" id="rev-home-players"></ul>
+      </div>
+    </div>
+
+    <div class="factors">
+      <h3>What drove the model's pick</h3>
+      <ul id="rev-factors"></ul>
+      <p class="footnote">From SHAP values on the XGBoost model. Trained on 2019–2023 games, data from Pro Football Reference.</p>
+    </div>
+
+    <!-- show why panel -->
+    <div class="why-toggle-row">
+      <button id="why-btn" class="why-btn" aria-expanded="false">
+        <span id="why-btn-text">See how the model works</span>
+      </button>
+    </div>
+
+    <div id="why-panel" class="why-panel" hidden>
+
+      <div class="why-intro">
+        <span class="why-kicker">Under the hood</span>
+        <h2>How a winner gets picked</h2>
+        <p>The plots below come straight out of the trained model, scored on 544 games it never touched while learning. Click any chart to blow it up.</p>
+      </div>
+
+      <div class="why-viz-grid">
+        <figure class="why-viz" data-zoom="/static/viz/roc_curves.png">
+          <img src="/static/viz/roc_curves.png" alt="ROC curves comparing the three models" loading="lazy">
+          <figcaption>
+            <span class="why-tag">ROC curves</span>
+            A curve that hugs the top-left corner means the model ranks real wins above real losses. The dashed line is a coin flip. All three beat it, and logistic regression edges ahead at AUC 0.68.
+          </figcaption>
+        </figure>
+
+        <figure class="why-viz" data-zoom="/static/viz/confusion_matrix.png">
+          <img src="/static/viz/confusion_matrix.png" alt="XGBoost confusion matrix on test games" loading="lazy">
+          <figcaption>
+            <span class="why-tag">Confusion matrix</span>
+            The two dark squares are right calls, 335 of 544 games. The pale squares are the misses. That split is the 61.6% you saw up top.
+          </figcaption>
+        </figure>
+      </div>
+
+      <figure class="why-viz why-viz-wide" data-zoom="/static/viz/shap_beeswarm.png">
+        <img src="/static/viz/shap_beeswarm.png" alt="SHAP beeswarm summary plot" loading="lazy">
+        <figcaption>
+          <span class="why-tag">SHAP beeswarm</span>
+          One dot per game. Top rows matter most. A dot's color is the stat value, red high and blue low. Its left-right spot says which way that stat shoved the pick: right toward the home team, left toward the visitor. Recent scoring on both sides carries the most weight.
+        </figcaption>
+      </figure>
+
+      <div class="why-steps">
+        <div class="why-step">
+          <span class="why-step-num">01</span>
+          <h4>XGBoost</h4>
+          <p>It grows decision trees one after another. Each new tree studies where the last batch went wrong and patches those specific misses. Stack a few hundred and you get the model that usually wins on spreadsheet-style data like this.</p>
+        </div>
+        <div class="why-step">
+          <span class="why-step-num">02</span>
+          <h4>Recent form, not season totals</h4>
+          <p>Every team stat is its average over the last five games, so a team that caught fire in November looks hot instead of average. The game being predicted never sneaks into its own five-game window, which is how you avoid feeding the model the answer.</p>
+        </div>
+        <div class="why-step">
+          <span class="why-step-num">03</span>
+          <h4>Football rules, baked in</h4>
+          <p>The model is told a bigger yardage or scoring edge can only ever help the team that holds it. That guardrail stops it from learning backwards quirks from small samples, and it nudged accuracy up at the same time.</p>
+        </div>
+        <div class="why-step">
+          <span class="why-step-num">04</span>
+          <h4>SHAP shows its work</h4>
+          <p>For a single game, SHAP measures how far each stat pushed the pick and in which direction. That math is exactly what fills the "what drove the model's pick" line above, so the number always comes with a reason.</p>
+        </div>
+      </div>
+
+      <div class="why-split-stat">
+        <div>
+          <span class="why-stat-num" id="why-trained-on"></span>
+          <span class="why-stat-label">games it learned from, 2019–2023</span>
+        </div>
+        <div class="why-stat-divider"></div>
+        <div>
+          <span class="why-stat-num" id="why-tested-on"></span>
+          <span class="why-stat-label">fresh games it was graded on, 2024–2025</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- lightbox for enlarging charts -->
+  <div id="lightbox" class="lightbox" hidden>
+    <button id="lightbox-close" class="lightbox-close" aria-label="Close">&times;</button>
+    <img id="lightbox-img" src="" alt="Enlarged chart">
+  </div>
 
   <script src="/static/app.js"></script>
 </body>

@@ -31,6 +31,21 @@ FEATURES_SPREAD = FEATURES_NOSPREAD + ["spread_line"]
 BASELINE = 0.535   # always pick the home team
 MARKET = 0.66      # rough NFL betting-market accuracy, for context
 
+# Monotonic constraints: encode football direction so a bigger edge can only
+# ever push the prediction the sensible way. Without these, XGBoost overfits the
+# weakly-predictive yardage features at the tails and produces inverted, nonsense
+# explanations (e.g. "away team is better at everything, so home wins"). Context
+# features are left unconstrained (0). +1 = raising it raises home-win prob,
+# -1 = lowers it.
+MONOTONE = {
+    "pass_yards_roll5_diff": 1,
+    "rush_yards_roll5_diff": 1,
+    "turnovers_roll5_diff": -1,
+    "points_scored_roll5_diff": 1,
+    "points_allowed_roll5_diff": -1,
+    "spread_line": 1,   # nflverse spread_line: higher = home more favored
+}
+
 
 def _evaluate(name, model, Xte, yte):
     pred = model.predict(Xte)
@@ -58,8 +73,10 @@ def train_variant(train, test, features, tag):
     rf = RandomForestClassifier(n_estimators=300, random_state=42).fit(Xtr, ytr)
     metrics.append(_evaluate(f"RandomForest [{tag}]", rf, Xte, yte))
 
+    constraints = tuple(MONOTONE.get(f, 0) for f in features)
     xgbc = xgb.XGBClassifier(n_estimators=300, max_depth=4, learning_rate=0.05,
-                             eval_metric="logloss", random_state=42).fit(Xtr, ytr)
+                             eval_metric="logloss", random_state=42,
+                             monotone_constraints=constraints).fit(Xtr, ytr)
     metrics.append(_evaluate(f"XGBoost [{tag}]", xgbc, Xte, yte))
 
     pickle.dump(xgbc, open(f"models/xgboost_{tag}.pkl", "wb"))
