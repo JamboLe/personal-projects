@@ -1,15 +1,9 @@
-"""Train and evaluate three models in two feature variants.
+"""Train logistic regression, random forest, and XGBoost on two feature sets.
 
-Models (increasing sophistication, so we can tell a baseline -> improvement story):
-  1. Logistic Regression - linear sanity check (needs scaled features).
-  2. Random Forest        - bagged trees, non-linear, free feature importance.
-  3. XGBoost              - boosted trees, usually strongest on tabular data.
+nospread: engineered features only (what the app uses)
+spread:   adds Vegas line as a market benchmark
 
-Variants:
-  - nospread : only our engineered features (the HONEST model the app uses).
-  - spread   : adds the Vegas line (a market BENCHMARK; see features_explained.md).
-
-Split is chronological (2019-2023 train, 2024-2025 test) -> no temporal leakage.
+Chronological split: 2019-2023 train, 2024-2025 test.
 """
 
 import json
@@ -31,12 +25,8 @@ FEATURES_SPREAD = FEATURES_NOSPREAD + ["spread_line"]
 BASELINE = 0.535   # always pick the home team
 MARKET = 0.66      # rough NFL betting-market accuracy, for context
 
-# Monotonic constraints: encode football direction so a bigger edge can only
-# ever push the prediction the sensible way. Without these, XGBoost overfits the
-# weakly-predictive yardage features at the tails and produces inverted, nonsense
-# explanations (e.g. "away team is better at everything, so home wins"). Context
-# features are left unconstrained (0). +1 = raising it raises home-win prob,
-# -1 = lowers it.
+# monotonic constraints so XGBoost can't produce inverted predictions
+# +1 = higher value raises home-win prob, -1 = lowers it, 0 = unconstrained
 MONOTONE = {
     "pass_yards_roll5_diff": 1,
     "rush_yards_roll5_diff": 1,
