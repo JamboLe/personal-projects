@@ -1,11 +1,9 @@
-"""Generate real ML visualizations from the trained models for the web app.
+"""Generate ML visualizations from trained models for the web app.
 
-Outputs (styled dark to match the app's 'how it works' panel):
-  app/static/viz/roc_curves.png       - ROC curves for all 3 models (no-spread)
-  app/static/viz/confusion_matrix.png - XGBoost confusion matrix on the test set
-  app/static/viz/shap_beeswarm.png    - SHAP beeswarm summary for XGBoost
-
-These are genuine model outputs, not hand-drawn charts.
+Outputs go to app/static/viz/:
+  roc_curves.png       - ROC curves for all 3 models (no-spread)
+  confusion_matrix.png - XGBoost confusion matrix on the test set
+  shap_beeswarm.png    - SHAP beeswarm summary for XGBoost
 """
 
 import json
@@ -44,7 +42,7 @@ def roc_curves():
     fig, ax = plt.subplots(figsize=(6.5, 5))
     colors = {"Logistic Regression": "#6366f1",
               "Random Forest": "#8b5cf6",
-              "XGBoost": "#1f6feb"}
+              "XGBoost": "#c4892a"}
 
     # load saved xgboost + retrain lr/rf inline for clean probability curves
     from sklearn.ensemble import RandomForestClassifier
